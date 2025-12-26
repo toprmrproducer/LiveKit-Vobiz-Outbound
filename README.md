@@ -98,10 +98,10 @@ uv run python agent.py start
 Open a **separate** terminal window (keep the first one running) and run:
 
 ```powershell
-uv run python make_call.py --to +919148227303
+uv run python make_call.py --to +919988776655 (your number)
 ```
 
-*(Replace `+919148227303` with the actual number you want to call)*
+*(Replace `+919988776655` with the actual number you want to call)*
 
 ### What Happens Next?
 
