@@ -5,7 +5,7 @@
 
 [![Instagram](https://img.shields.io/badge/Instagram-@ai.w.raj-E4405F?style=for-the-badge&logo=instagram)](https://instagram.com/ai.w.raj)
 [![X](https://img.shields.io/badge/X-@topR9595-000000?style=for-the-badge&logo=x)](https://x.com/topR9595)
-[![YouTube](https://img.shields.io/badge/YouTube-Shreyas_Raj-FF0000?style=for-the-badge&logo=youtube)](https://youtube.com/@ShreyasRaj)
+[![YouTube](https://img.shields.io/badge/YouTube-Shreyas_Raj-FF0000?style=for-the-badge&logo=youtube)](https://youtube.com/@AiwithShreyasRaj)
 
 ---
 
