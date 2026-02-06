@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-glass: rgba(255, 255, 255, 0.05);
+  --color-glassBorder: rgba(255, 255, 255, 0.1);
+
+  /* Retain gradient extensions if needed, or rely on standard utilities */
+}
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: black;
+  /* Simplified background */
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

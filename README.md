@@ -1,135 +1,105 @@
-# LiveKit Outbound Calling Agent
+# 🚀 Rapid X AI Voice Agent (Vobiz Edition)
 
-This project provides a production-ready solution for making outbound AI phone calls using LiveKit and Vobiz SIP trunks. The AI agent can place calls, wait for an answer, and hold a natural conversation with the recipient.
+**Powered by [Rapid X AI](https://rapidxai.com)**  
+*Next-Gen Conversational AI Orchestration*
 
-## 📂 Project Structure
-
-| File | Description |
-|------|-------------|
-| `agent.py` | The main AI worker. It runs in the background, waits for dispatch jobs, and places outbound calls. |
-| `make_call.py` | A utility script to trigger calls. It dispatches the agent to a unique room with the target phone number. |
-| `setup_trunk.py` | Script to configure the LiveKit SIP Trunk with Vobiz credentials. |
-| `transfer_call.md` | Guide for configuring and using SIP transfers. |
-| `.env.example` | Template for environment variables and secrets. |
-| `requirements.txt` | List of Python dependencies. |
+[![Instagram](https://img.shields.io/badge/Instagram-@ai.w.raj-E4405F?style=for-the-badge&logo=instagram)](https://instagram.com/ai.w.raj)
+[![X](https://img.shields.io/badge/X-@topR9595-000000?style=for-the-badge&logo=x)](https://x.com/topR9595)
+[![YouTube](https://img.shields.io/badge/YouTube-Shreyas_Raj-FF0000?style=for-the-badge&logo=youtube)](https://youtube.com/@ShreyasRaj)
 
 ---
 
-## 🚀 Installation & Setup
+## 🌟 Introduction
+
+Welcome to the **Rapid X AI Voice Agent** codebase. This project allows you to spawn intelligent, human-like voice assistants that can call phone numbers, handle real-time conversations, and trigger actions.
+
+It is built on a "Modern AI Stack" for ultra-low latency:
+*   **[LiveKit](https://livekit.io)**: For real-time audio streaming infrastructure.
+*   **[Vobiz](https://vobiz.io)**: For telephony (SIP Trunking) connectivity.
+*   **[Sarvam AI](https://sarvam.ai)**: For hyper-realistic Indian voices.
+*   **[Groq](https://groq.com)**: For instant AI thinking (LPU Inference).
+
+---
+
+## 📂 Project Structure (Where is everything?)
+
+Here is a simple breakdown of the files:
+
+*   **`agent.py`**: 🧠 **The Brain.** This file enables the AI. It listens to audio, thinks using Groq, and speaks using Sarvam.
+*   **`dashboard/`**: 💻 **The Control Center.** This folder contains the Website code.
+    *   `app/page.tsx`: The main page with the "Call Dispatcher" UI.
+    *   `app/api/dispatch/route.ts`: The button logic. When you click "Call", this file talks to the server.
+*   **`.env`**: 🔑 **The Keys.** This secret file stores your API passwords (LiveKit, Vobiz, etc.). **Never share this!**
+*   **`requirements.txt`**: 📦 **The Parts List.** A list of Python tools (libraries) the AI needs to run.
+*   **`Dockerfile`**: 🐳 **The Shipping Container.** Instructions to package the AI for cloud servers.
+
+---
+
+## ⚡️ Quick Start Guide
 
 ### 1. Prerequisites
+*   Python 3.10+ installed.
+*   Node.js installed (for the dashboard).
+*   API Keys from [LiveKit](https://livekit.io), [Sarvam AI](https://sarvam.ai), and [Groq](https://groq.com).
+*   A SIP Trunk set up on [Vobiz](https://vobiz.io).
 
-Ensure you have the following installed:
-- **Python 3.9+**
-- **uv** (recommended for fast package management) - [Install uv](https://github.com/astral-sh/uv)
+### 2. Setup (Backend / Agent)
+Open your terminal and run:
 
-### 2. LiveKit & Vobiz Credentials
+```bash
+# 1. Clone the repository
+git clone https://github.com/Start-Up-Republic/LiveKit-Vobiz-Outbound.git
+cd LiveKit-Vobiz-Outbound
 
-You will need the following accounts:
+# 2. Create the environment (Virtual Box)
+python3 -m venv venv
+source venv/bin/activate  # (On Windows use `venv\Scripts\activate`)
 
-1.  **LiveKit Cloud Account**: Get your Project URL, API Key, and Secret from [cloud.livekit.io](https://cloud.livekit.io).
-2.  **Vobiz Account**:
-    *   Log in to the **Vobiz Console Platform**.
-    *   Navigate to your SIP Trunk settings to find:
-        *   SIP Domain (e.g., `xxx.sip.vobiz.ai`)
-        *   Username & Password
-    *   Get your DID Number (e.g., `+91...`).
-3.  **OpenAI / Deepgram Keys**:
-    *   OpenAI API Key (for LLM and optional TTS)
-    *   Deepgram API Key (for STT)
+# 3. Install the parts
+pip install -r requirements.txt
 
-### 3. Installation Steps
+# 4. Set up your keys
+cp .env.example .env
+# -> Now open .env and paste your API keys!
+```
 
-1.  **Clone/Copy the project** to your local machine.
-2.  **Open a terminal** in the project folder (`livekit-outbound-calls`).
-3.  **Install dependencies** using `uv`:
+**Run the Agent:**
+```bash
+python agent.py start
+```
+*You will see "Connecting to LiveKit..." success messages.*
 
-    ```powershell
-    # Create virtual environment
-    uv venv
+### 3. Setup (Frontend / Dashboard)
+Open a **new** terminal window:
 
-    # Install required packages
-    uv pip install -r requirements.txt
-    ```
+```bash
+cd dashboard
 
-### 4. Configuration
+# 1. Install dashboard parts
+npm install
 
-1.  **Create your env file**:
-    ```powershell
-    cp .env.example .env.local
-    ```
-2.  **Edit `.env.local`** and fill in your keys:
-    ```env
-    LIVEKIT_URL=wss://...
-    LIVEKIT_API_KEY=...
-    LIVEKIT_API_SECRET=...
-    OPENAI_API_KEY=...
-    DEEPGRAM_API_KEY=...
-    
-    # SIP Config
-    VOBIZ_SIP_DOMAIN=...
-    VOBIZ_USERNAME=...
-    VOBIZ_PASSWORD=...
-    VOBIZ_OUTBOUND_NUMBER=+91...
-    ```
-3.  **Set Trunk ID in `agent.py`**:
-    *   If you haven't created a trunk yet, you'll need to create one using the LiveKit CLI or setup script.
-    *   Once created, get the `TRUNK_ID` (starts with `ST_...`).
-    *   Open `agent.py` and update line 25:
-        ```python
-        OUTBOUND_TRUNK_ID = "ST_xxxxxxxxx"
-        ```
+# 2. Run the website
+npm run dev
+```
+
+Go to **[http://localhost:3000](http://localhost:3000)** in your browser. You will see the **Rapid X AI Control Center**.
 
 ---
 
-## 📞 How to Use
-
-### Step 1: Start the Background Agent
-
-Open a PowerShell terminal and run:
-
-```powershell
-uv run python agent.py start
-```
-
-*   **Wait** until you see the message: `INFO:livekit.agents:registered worker ...`
-*   **Keep this terminal open.** This agent will listen for call requests.
-
-### Step 2: Make a Call
-
-Open a **separate** terminal window (keep the first one running) and run:
-
-```powershell
-uv run python make_call.py --to +919988776655 (your number)
-```
-
-*(Replace `+919988776655` with the actual number you want to call)*
-
-### What Happens Next?
-
-1.  `make_call.py` sends a "dispatch" request to LiveKit.
-2.  LiveKit assigns the job to your running `agent.py`.
-3.  The agent joins a secure room (e.g., `call-9148...`).
-4.  The agent dials the phone number via the Vobiz SIP trunk.
-5.  **When the user answers**, the agent will start listening and speaking.
-6.  **Call Transfer**: You can ask the agent to transfer you.
-    *   *Default*: "Transfer me." -> Transfers to the configured default number.
-    *   *Custom*: "Transfer me to +1..." -> Transfers to the specific number.
-    *   For detailed setup and troubleshooting, see [transfer_call.md](transfer_call.md).
+## 📞 How to Make a Call
+1.  Ensure `agent.py` is running in one terminal.
+2.  Ensure `npm run dev` is running in another.
+3.  Open the Dashboard (localhost:3000).
+4.  Enter a phone number (e.g., `+91...`).
+5.  Click **"Initiate Call"**.
+6.  The Agent will wake up, dial the number via Vobiz, and start talking!
 
 ---
 
-## 🛠️ Troubleshooting
+## 🤝 Need Custom AI Solutions?
+**Book a call with the Rapid X AI Team.** We build enterprise-grade voice agents for sales, support, and operations.
 
-- **Agent not starting?**
-    - Check `.env.local` is correct.
-    - Ensure dependencies are installed (`uv pip install ...`).
+👉 **[rapidxai.com](https://rapidxai.com)**
 
-- **Call not connecting?**
-    - Check `OUTBOUND_TRUNK_ID` in `agent.py`.
-    - Verify your Vobiz SIP credentials and balance.
-    - Ensure the phone number includes the country code (e.g., `+91`).
-
-- **No audio?**
-    - Check OpenAI/Deepgram API keys.
-    - Check the agent logs for errors.
+---
+*Built with ❤️ by Shreyas Raj.*

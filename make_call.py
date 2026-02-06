@@ -1,8 +1,14 @@
+import os
+import certifi
+
+# Fix for macOS SSL Certificate errors - MUST be before other imports
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
 import argparse
 import asyncio
-import os
 import random
 import json
+import logging
 from dotenv import load_dotenv
 from livekit import api
 
