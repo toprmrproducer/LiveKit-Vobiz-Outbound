@@ -33,6 +33,7 @@ INITIAL_GREETING = "The user has picked up the call. Introduce yourself as the S
 
 # If the user initiates the call (inbound) or is already there:
 fallback_greeting = "Greet the user immediately."
+WEB_GREETING = "Hello! I am the AI Assistant. How can I help you today?"
 
 
 # --- 2. SPEECH-TO-TEXT (STT) SETTINGS ---

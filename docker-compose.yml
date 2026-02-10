@@ -1,9 +1,41 @@
 services:
+  # 1. Voice Agent (Python)
   voice-agent:
     build: .
     restart: unless-stopped
     env_file:
       - .env
     volumes:
-      - .:/app # For development/hot-reload (remove in prod)
-    network_mode: host # Recommended for WebRTC/Voice low latency
+      - .:/app
+    network_mode: host # WebRTC needs host networking
+    depends_on:
+      - postgres
+
+  # 2. Database (PostgreSQL)
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vobiz
+      POSTGRES_PASSWORD: vobizpassword
+      POSTGRES_DB: vobiz_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 3. Dashboard (Next.js)
+  dashboard:
+    build: ./dashboard
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./dashboard/.env.local
+    environment:
+      # Connection string for Prisma (internal docker network)
+      DATABASE_URL: "postgresql://vobiz:vobizpassword@postgres:5432/vobiz_db"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

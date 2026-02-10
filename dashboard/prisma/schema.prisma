@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 1. System Configuration
+// Stores global settings like default prompt, voices, etc.
+model Config {
+  id        String   @id @default(cuid())
+  key       String   @unique // e.g., "DEFAULT_PROMPT"
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// 2. Campaigns (Mass Calling)
+// A group of contacts to be called with a specific script/prompt.
+model Campaign {
+  id             String    @id @default(cuid())
+  name           String
+  status         String    @default("DRAFT") // DRAFT, RUNNING, COMPLETED, PAUSED
+  promptTemplate String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  contacts       Contact[]
+  calls          Call[]
+}
+
+// 3. Contacts
+// People to be called.
+model Contact {
+  id         String   @id @default(cuid())
+  phone      String
+  name       String?
+  email      String?
+  attributes Json?    // Custom fields like { "orderId": "123", "city": "NYC" }
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+  campaignId String?
+  calls      Call[]
+}
+
+// 4. Calls
+// Individual call records and their outcomes.
+model Call {
+  id             String    @id @default(cuid())
+  status         String    @default("PENDING") // PENDING, DISPATCHED, ACTIVE, COMPLETED, FAILED
+  direction      String    @default("OUTBOUND") // OUTBOUND, INBOUND
+  duration       Int?      // In seconds
+  
+  // Links
+  contact        Contact?  @relation(fields: [contactId], references: [id])
+  contactId      String?
+  campaign       Campaign? @relation(fields: [campaignId], references: [id])
+  campaignId     String?
+  
+  // Data Return
+  recordingUrl   String?
+  transcript     String?   @db.Text
+  summary        String?   @db.Text
+  analysis       Json?     // e.g., { "sentiment": "positive", "intent": "buy" }
+  
+  startedAt      DateTime?
+  endedAt        DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// 5. Tools (Dynamic Configuration)
+// Defines tools the agent can use (e.g., "check_order", "transfer_call")
+model Tool {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  config      Json     // validation rules, api endpoints, etc.
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

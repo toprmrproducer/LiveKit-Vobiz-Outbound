@@ -163,9 +163,9 @@ class OutboundAssistant(Agent):
     An AI agent tailored for outbound calls.
     Attempts to be helpful and concise.
     """
-    def __init__(self, tools: list) -> None:
+    def __init__(self, tools: list, system_prompt: str = None) -> None:
         super().__init__(
-            instructions=config.SYSTEM_PROMPT,
+            instructions=system_prompt or config.SYSTEM_PROMPT,
             tools=tools,
         )
 
@@ -221,7 +221,10 @@ async def entrypoint(ctx: agents.JobContext):
     # Start the session
     await session.start(
         room=ctx.room,
-        agent=OutboundAssistant(tools=list(fnc_ctx.function_tools.values())),
+        agent=OutboundAssistant(
+            tools=list(fnc_ctx.function_tools.values()),
+            system_prompt=config_dict.get("user_prompt")
+        ),
         room_input_options=RoomInputOptions(
             noise_cancellation=noise_cancellation.BVCTelephony(),
             close_on_disconnect=True, # Close room when agent disconnects
@@ -277,13 +280,73 @@ async def entrypoint(ctx: agents.JobContext):
             
         except Exception as e:
             logger.error(f"Failed to place outbound call: {e}")
-            # Ensure we clean up if the call fails
-            ctx.shutdown()
     else:
-        # Fallback for inbound calls (if this agent is used for that) OR Dashboard calls where user is already there
-        logger.info("Detecting if we should greet...")
-        # Give a small delay for audio to stabilize if user just joined
-        await session.generate_reply(instructions=config.fallback_greeting)
+        # Fallback for inbound calls (SIP Inbound or Web Widget)
+        # In these cases, the user is likely already in the room or joining.
+        logger.info("No phone number found. Assuming Inbound/Web user.")
+        
+        # Check if we have a web participant? 
+        # Actually, for both SIP inbound and Web, we just want to greet.
+        
+        logger.info("Greeting the user...")
+        await session.generate_reply(instructions=config.WEB_GREETING)
+
+    # --- DATA COLLECTION LOOP ---
+    # Register a callback for when the agent disconnects or the job ends
+    pass # Implementation done below in event handlers
+    
+    # We need to capture the transcript. 
+    # LiveKit Agents 1.0 doesn't have a simple "on_end" callback in entrypoint easily without using events.
+    # But we can assume when entrypoint exits? No, entrypoint exits immediately?
+    # No, `await session.start` blocks?
+    # Actually `await session.start` returns the tasks.
+    # A common pattern is to wait for the room to disconnect.
+
+    # Wait for the session to end
+    # Note: session.start() runs the agent logic.
+    # To wait for disconnect:
+    # await ctx.room.disconnect() # No
+    pass
+
+# We will wrap the execution in a try/finally block or use a shutdown hook?
+# Better: Hook into the 'job' (if using jobs) or just Room events.
+# For simplicity in this `entrypoint` function:
+
+    @ctx.room.on("disconnected")
+    async def on_disconnect(reason):
+        logger.info(f"Room disconnected: {reason}")
+        # Extract Chat History / Transcript
+        # The 'chat_ctx' is on the agent?
+        # session.chat_ctx is available.
+        
+        chat_history = session.chat_ctx.messages
+        # Format transcript
+        transcript_text = "\n".join([f"{m.role}: {m.content}" for m in chat_history])
+        
+        logger.info(f"Transcript length: {len(transcript_text)}")
+        
+        # Send to Webhook
+        try:
+            import aiohttp
+            # Default to localhost because agent runs in network_mode: host and dashboard ports are mapped to host
+            webhook_url = os.getenv("WEBHOOK_URL", "http://localhost:3000/api/hooks/transcript")
+            
+            payload = {
+                "call_id": config_dict.get("call_id"), # Passed from Dispatch
+                "phone": phone_number,
+                "transcript": transcript_text,
+                "status": "COMPLETED",
+                "duration": 0 # Calculate if needed
+            }
+            
+            async with aiohttp.ClientSession() as http_session:
+                async with http_session.post(webhook_url, json=payload) as resp:
+                    logger.info(f"Webhook sent: {resp.status}")
+                    
+        except Exception as e:
+            logger.error(f"Failed to send webhook: {e}")
+
+
 
 
 if __name__ == "__main__":
