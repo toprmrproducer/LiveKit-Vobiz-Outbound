@@ -20,4 +20,5 @@ COPY . .
 EXPOSE 8080
 
 # Run the agent
-CMD ["python", "agent.py", "start"]
+# Run the agent
+CMD python agent.py start
