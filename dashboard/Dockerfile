@@ -21,6 +21,7 @@ COPY . .
 # ENV NEXT_TELEMETRY_DISABLED 1
 
 # Run the build
+ENV DATABASE_URL="postgresql://dummy:5432/mydb"
 RUN npx prisma generate
 RUN npm run build
 
