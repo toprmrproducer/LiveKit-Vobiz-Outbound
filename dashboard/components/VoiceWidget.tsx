@@ -37,11 +37,20 @@ export default function VoiceWidget() {
         setToken(null);
     }, []);
 
+    useEffect(() => {
+        // Notify the parent (embed script) about state changes to resize the iframe
+        if (isOpen) {
+            window.parent.postMessage('widget-open', '*');
+        } else {
+            window.parent.postMessage('widget-close', '*');
+        }
+    }, [isOpen]);
+
     if (!isOpen || !token || !url) {
         return (
             <button
                 onClick={connect}
-                className="fixed bottom-4 right-4 h-14 w-14 rounded-full bg-blue-600 text-white shadow-lg flex items-center justify-center hover:bg-blue-700 transition-all z-50"
+                className="fixed bottom-4 right-4 h-14 w-14 rounded-full bg-blue-600 text-white shadow-lg flex items-center justify-center hover:bg-blue-700 transition-all z-50 animate-in fade-in zoom-in duration-300"
             >
                 <MessageSquare className="h-6 w-6" />
             </button>
