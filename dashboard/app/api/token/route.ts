@@ -2,35 +2,39 @@ import { AccessToken } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
-    const roomName = req.nextUrl.searchParams.get('roomName') || `room-${Math.random().toString(36).substring(7)}`;
-    const username = req.nextUrl.searchParams.get('username') || `visitor-${Math.random().toString(36).substring(7)}`;
+    const roomName = req.nextUrl.searchParams.get('roomName') || 'inbound-' + Math.random().toString(36).substring(7);
+    const participantName = req.nextUrl.searchParams.get('username') || 'Web Visitor ' + Math.floor(Math.random() * 1000);
 
-    if (!process.env.LIVEKIT_API_KEY || !process.env.LIVEKIT_API_SECRET) {
-        return NextResponse.json(
-            { error: 'Server misconfigured' },
-            { status: 500 }
-        );
+    const apiKey = process.env.LIVEKIT_API_KEY;
+    const apiSecret = process.env.LIVEKIT_API_SECRET;
+    const wsUrl = process.env.LIVEKIT_URL;
+
+    if (!apiKey || !apiSecret || !wsUrl) {
+        return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
     }
 
-    const at = new AccessToken(
-        process.env.LIVEKIT_API_KEY,
-        process.env.LIVEKIT_API_SECRET,
-        {
-            identity: username,
-            ttl: '1h',
-        }
-    );
+    try {
+        const at = new AccessToken(apiKey, apiSecret, {
+            identity: participantName,
+        });
 
-    at.addGrant({
-        roomJoin: true,
-        room: roomName,
-        canPublish: true,
-        canSubscribe: true,
-    });
+        at.addGrant({
+            roomJoin: true,
+            room: roomName,
+            canPublish: true,
+            canSubscribe: true,
+        });
 
-    return NextResponse.json({
-        accessToken: await at.toJwt(),
-        url: process.env.LIVEKIT_URL,
-        roomName,
-    });
+        const token = await at.toJwt();
+
+        return NextResponse.json({
+            token,
+            wsUrl,
+            roomName,
+            participantName
+        });
+    } catch (error) {
+        console.error('Error generating token:', error);
+        return NextResponse.json({ error: 'Failed to generate token' }, { status: 500 });
+    }
 }

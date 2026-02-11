@@ -20,6 +20,7 @@ from livekit.plugins import (
 )
 from livekit.agents import llm
 from typing import Annotated, Optional
+import asyncio
 
 # Load environment variables
 load_dotenv(".env")
@@ -285,10 +286,25 @@ async def entrypoint(ctx: agents.JobContext):
         # In these cases, the user is likely already in the room or joining.
         logger.info("No phone number found. Assuming Inbound/Web user.")
         
-        # Check if we have a web participant? 
-        # Actually, for both SIP inbound and Web, we just want to greet.
+        # Check if we have a web participant
+        if not ctx.room.remote_participants:
+            logger.info("No participants yet. Waiting for participant to connect...")
+            participant_connected = asyncio.Event()
+            
+            @ctx.room.on("participant_connected")
+            def on_p_connected(p):
+                logger.info(f"Participant connected: {p.identity}")
+                participant_connected.set()
+            
+            try:
+                await asyncio.wait_for(participant_connected.wait(), timeout=30)
+            except asyncio.TimeoutError:
+                logger.warning("No participant joined within 30s. Exiting.")
+                return
         
         logger.info("Greeting the user...")
+        # Small delay to ensure audio is ready
+        await asyncio.sleep(1)
         await session.generate_reply(instructions=config.WEB_GREETING)
 
     # --- DATA COLLECTION LOOP ---
