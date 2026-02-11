@@ -38,11 +38,18 @@ export default function VoiceWidget() {
     }, []);
 
     useEffect(() => {
-        // Notify the parent (embed script) about state changes to resize the iframe
+        // Notify parent to resize
         if (isOpen) {
             window.parent.postMessage('widget-open', '*');
         } else {
             window.parent.postMessage('widget-close', '*');
+        }
+
+        // Check for HTTPS (Microphone permission requirement)
+        if (typeof window !== 'undefined' && window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+            console.warn("Voice Widget requires HTTPS for microphone access.");
+            // We could show a toast here, but for now console warning is a start.
+            // Actually, let's just make sure the user knows via UI if it fails.
         }
     }, [isOpen]);
 

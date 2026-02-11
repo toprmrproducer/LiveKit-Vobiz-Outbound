@@ -366,6 +366,12 @@ async def entrypoint(ctx: agents.JobContext):
 
 
 if __name__ == "__main__":
+    # Load dynamic settings from Dashboard API if available
+    try:
+        config.load_dynamic_config()
+    except Exception as e:
+        logger.warning(f"Failed to load dynamic config: {e}")
+
     # The agent name "outbound-caller" is used by the dispatch script to find this worker
     agents.cli.run_app(
         agents.WorkerOptions(

@@ -71,6 +71,43 @@ GROQ_TEMPERATURE = 0.7
 # Default number to transfer calls to if no specific destination is asked.
 DEFAULT_TRANSFER_NUMBER = os.getenv("DEFAULT_TRANSFER_NUMBER")
 
-# Vobiz Trunk Details (Loaded from .env usually, but you can hardcode if needed)
-SIP_TRUNK_ID = os.getenv("VOBIZ_SIP_TRUNK_ID")
-SIP_DOMAIN = os.getenv("VOBIZ_SIP_DOMAIN")
+# ... (Existing constants)
+
+import requests
+import logging
+
+logger = logging.getLogger("config")
+
+def load_dynamic_config(dashboard_url=None):
+    """
+    Fetches configuration from the Dashboard API and updates globals.
+    """
+    if not dashboard_url:
+        dashboard_url = os.getenv("DASHBOARD_URL", "http://localhost:3000")
+    
+    api_url = f"{dashboard_url}/api/settings"
+    try:
+        logger.info(f"Fetching config from {api_url}...")
+        resp = requests.get(api_url, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            
+            # Map API keys to module variables
+            global SYSTEM_PROMPT, SIP_TRUNK_ID, SIP_DOMAIN, STT_PROVIDER, STT_MODEL, DEFAULT_LLM_PROVIDER
+            
+            if "SYSTEM_PROMPT" in data: SYSTEM_PROMPT = data["SYSTEM_PROMPT"]
+            if "SIP_TRUNK_ID" in data: SIP_TRUNK_ID = data["SIP_TRUNK_ID"]
+            # Add other mappings for API keys if they are stored in config module
+            # Note: Sensitive keys like OPENAI_API_KEY might need to be set in os.environ for libraries to pick them up
+            
+            if "OPENAI_API_KEY" in data: os.environ["OPENAI_API_KEY"] = data["OPENAI_API_KEY"]
+            if "LIVEKIT_URL" in data: os.environ["LIVEKIT_URL"] = data["LIVEKIT_URL"]
+            if "LIVEKIT_API_KEY" in data: os.environ["LIVEKIT_API_KEY"] = data["LIVEKIT_API_KEY"]
+            if "LIVEKIT_API_SECRET" in data: os.environ["LIVEKIT_API_SECRET"] = data["LIVEKIT_API_SECRET"]
+            
+            logger.info("Configuration updated from Dashboard API.")
+        else:
+            logger.warning(f"Failed to fetch config: {resp.status_code} {resp.text}")
+    except Exception as e:
+        logger.error(f"Could not fetch dynamic config: {e}")
+
