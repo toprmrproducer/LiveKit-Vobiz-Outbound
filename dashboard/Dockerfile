@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm ci
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -53,6 +53,5 @@ ENV PORT 3000
 # set hostname to localhost
 ENV HOSTNAME "0.0.0.0"
 
-# Start Next.js with conditional DB migration
-# We use || true to ensure the container starts even if migration fails (so we can debug)
-CMD (if [ -n "$DATABASE_URL" ]; then npx prisma db push; fi) && node server.js
+# Start Next.js
+CMD ["node", "server.js"]
