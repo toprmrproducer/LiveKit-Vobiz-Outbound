@@ -53,5 +53,6 @@ ENV PORT 3000
 # set hostname to localhost
 ENV HOSTNAME "0.0.0.0"
 
-# Start Next.js with automatic DB migration
-CMD npx prisma db push && node server.js
+# Start Next.js with conditional DB migration
+# We use || true to ensure the container starts even if migration fails (so we can debug)
+CMD (if [ -n "$DATABASE_URL" ]; then npx prisma db push; fi) && node server.js
