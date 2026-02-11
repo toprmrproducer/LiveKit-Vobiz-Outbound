@@ -84,7 +84,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                     {
                         participantIdentity,
                         participantName: contact.name || "Customer",
-                        // roomMetadata removed as it's not valid here
                     }
                 );
 
